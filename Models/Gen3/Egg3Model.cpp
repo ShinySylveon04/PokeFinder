@@ -26,17 +26,19 @@ Egg3Model::Egg3Model(QObject *parent, Method method) : QAbstractTableModel(paren
 
 void Egg3Model::setModel(vector<Frame3> frames)
 {
+    if (frames.empty())
+        return;
     int i = rowCount();
-    int size = i + frames.size();
-    emit beginInsertRows(QModelIndex(), i, size == 0 ? 0 : size);
+    emit beginInsertRows(QModelIndex(), i, i + frames.size() - 1);
     model.insert(model.end(), frames.begin(), frames.end());
     emit endInsertRows();
 }
 
 void Egg3Model::clear()
 {
-    int i = rowCount();
-    emit beginRemoveRows(QModelIndex(), 0, i == 0 ? 0 : i - 1);
+    if (model.empty())
+        return;
+    emit beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
     model.clear();
     model.shrink_to_fit();
     emit endRemoveRows();
@@ -67,8 +69,9 @@ int Egg3Model::columnCount(const QModelIndex &parent) const
             return 8;
         case RSBred:
         case FRLGBred:
-        default:
             return 17;
+        default:
+            return 0;
     }
 }
 
@@ -166,6 +169,8 @@ QVariant Egg3Model::data(const QModelIndex &index, int role) const
                     case 16:
                         return frame.getGender();
                 }
+            default:
+                break;
         }
     }
 
@@ -265,6 +270,8 @@ QVariant Egg3Model::headerData(int section, Qt::Orientation orientation, int rol
                         case 16:
                             return tr("Gender");
                     }
+                default:
+                    break;
             }
         }
     }

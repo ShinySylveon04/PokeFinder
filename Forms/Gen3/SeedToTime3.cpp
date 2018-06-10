@@ -32,21 +32,52 @@ SeedToTime3::SeedToTime3(QWidget *parent) :
     setupModels();
 }
 
+SeedToTime3::SeedToTime3(u32 seed, QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::SeedToTime3)
+{
+    ui->setupUi(this);
+    setAttribute(Qt::WA_QuitOnClose, false);
+    setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
+
+    setupModels();
+
+    ui->seedToTimeSeed->setText(QString::number(seed, 16));
+    on_pushButtonFind_clicked();
+}
+
+SeedToTime3::~SeedToTime3()
+{
+    saveSettings();
+
+    delete ui;
+    delete model;
+}
+
 void SeedToTime3::setupModels()
 {
     ui->seedToTimeSeed->setValues(0, 32, false);
     ui->seedToTimeYear->setValues(0, 53, true);
 
     model->setColumnCount(2);
-    model->setHorizontalHeaderLabels(QStringList() << tr("Time") << tr("Seconds"));
+    model->setHorizontalHeaderLabels(QStringList() << tr("Time") << tr("Frame") << tr("Seconds"));
     ui->tableViewGenerator->setModel(model);
     ui->tableViewGenerator->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    loadSettings();
 }
 
-SeedToTime3::~SeedToTime3()
+void SeedToTime3::saveSettings()
 {
-    delete ui;
-    delete model;
+    QSettings setting;
+    setting.setValue("seed3Year", ui->seedToTimeYear->text());
+}
+
+void SeedToTime3::loadSettings()
+{
+    QSettings setting;
+    if (setting.contains("seed3Year")) ui->seedToTimeYear->setText(setting.value("seed3Year").toString());
 }
 
 void SeedToTime3::changeEvent(QEvent *event)
@@ -68,6 +99,7 @@ void SeedToTime3::on_pushButtonFind_clicked()
 {
     u32 seed = ui->seedToTimeSeed->text().toUInt(NULL, 16);
     u32 year = ui->seedToTimeYear->text().toUInt(NULL, 10);
+    frame = 1;
     if (seed > 0xFFFF)
     {
         seed = originSeed(seed);
@@ -114,9 +146,9 @@ void SeedToTime3::seedToTime(u32 seed, u32 year)
         maxDay += temp.daysInMonth();
         for (u32 day = minDay; day < maxDay; day++)
         {
-            for (u32 hour = 0; hour < 23; hour++)
+            for (u32 hour = 0; hour < 24; hour++)
             {
-                for (u32 minute = 0; minute < 59; minute++)
+                for (u32 minute = 0; minute < 60; minute++)
                 {
                     // Formula to generate intial seed
                     u32 v = 1440 * day + 960 * (hour / 10) + 60 * (hour % 10) + 16 * (minute / 10) + (minute % 10) + 0x5A0;
@@ -128,9 +160,7 @@ void SeedToTime3::seedToTime(u32 seed, u32 year)
                         QString result = finalTime.toString(Qt::SystemLocaleShortDate);
                         int seconds = day * 86400 + hour * 3600 + minute * 60;
                         QList<QStandardItem *> list;
-                        QStandardItem *text = new QStandardItem(result);
-                        QStandardItem *secondsText = new QStandardItem(QString::number(seconds, 10));
-                        list << text << secondsText;
+                        list << new QStandardItem(result) << new QStandardItem(QString::number(frame, 10)) << new QStandardItem(QString::number(seconds, 10));
                         model->appendRow(list);
                     }
                 }
@@ -144,6 +174,9 @@ u32 SeedToTime3::originSeed(u32 seed)
 {
     LCRNG rng = PokeRNGR(seed);
     while (rng.seed > 0xFFFF)
+    {
         rng.nextUInt();
+        frame++;
+    }
     return rng.seed;
 }

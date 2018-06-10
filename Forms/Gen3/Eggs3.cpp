@@ -27,12 +27,15 @@ Eggs3::Eggs3(QWidget *parent) :
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
 
-    setupModels();
     updateProfiles();
+    setupModels();
 }
 
 Eggs3::~Eggs3()
 {
+    QSettings setting;
+    setting.setValue("egg3Profile", ui->comboBoxProfiles->currentIndex());
+
     delete ui;
     delete emeraldIVs;
     delete emeraldPID;
@@ -44,30 +47,27 @@ void Eggs3::updateProfiles()
 {
     profiles = Profile3::loadProfileList();
 
-    QStandardItemModel *profile = new QStandardItemModel((int)profiles.size() + 1, 1, this);
-    QStandardItem *firstProfile = new QStandardItem(tr("None"));
-    profile->setItem(0, firstProfile);
+    ui->comboBoxProfiles->clear();
+
+    ui->comboBoxProfiles->addItem(tr("None"));
     for (int i = 0; i < (int)profiles.size(); i++)
-    {
-        QStandardItem *item = new QStandardItem(profiles.at(i).profileName);
-        profile->setItem(i + 1, item);
-    }
-    ui->comboBoxProfiles->setModel(profile);
+        ui->comboBoxProfiles->addItem(profiles.at(i).profileName);
+
+    QSettings setting;
+    int val = setting.value("egg3Profile").toInt();
+    if (val < ui->comboBoxProfiles->count())
+        ui->comboBoxProfiles->setCurrentIndex(val);
 }
 
 void Eggs3::setupModels()
 {
     ui->tableViewEmeraldIVs->setModel(emeraldIVs);
-    ui->tableViewEmeraldIVs->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewEmeraldPID->setModel(emeraldPID);
-    ui->tableViewEmeraldPID->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewRS->setModel(rs);
-    ui->tableViewRS->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewFRLG->setModel(frlg);
-    ui->tableViewFRLG->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->textBoxMinFrameEmeraldPID->setValues(1, 32, true);
     ui->textBoxMaxFrameEmeraldPID->setValues(1, 32, true);
@@ -133,7 +133,7 @@ void Eggs3::changeEvent(QEvent *event)
 
 void Eggs3::on_comboBoxProfiles_currentIndexChanged(int index)
 {
-    if (index == 0)
+    if (index <= 0)
     {
         ui->textBoxTIDEmerald->setText("12345");
         ui->textBoxSIDEmerald->setText("54321");
@@ -141,40 +141,23 @@ void Eggs3::on_comboBoxProfiles_currentIndexChanged(int index)
         ui->textBoxSIDRS->setText("54321");
         ui->textBoxTIDFRLG->setText("12345");
         ui->textBoxSIDFRLG->setText("54321");
+        ui->profileTID->setText("12345");
+        ui->profileSID->setText("54321");
+        ui->profileGame->setText(tr("Emerald"));
     }
     else
     {
-        ui->textBoxTIDEmerald->setText(QString::number(profiles.at(index - 1).tid));
-        ui->textBoxSIDEmerald->setText(QString::number(profiles.at(index - 1).sid));
-        ui->textBoxTIDRS->setText(QString::number(profiles.at(index - 1).tid));
-        ui->textBoxSIDRS->setText(QString::number(profiles.at(index - 1).sid));
-        ui->textBoxTIDFRLG->setText(QString::number(profiles.at(index - 1).tid));
-        ui->textBoxSIDFRLG->setText(QString::number(profiles.at(index - 1).sid));
+        auto profile = profiles.at(index - 1);
+        ui->textBoxTIDEmerald->setText(QString::number(profile.tid));
+        ui->textBoxSIDEmerald->setText(QString::number(profile.sid));
+        ui->textBoxTIDRS->setText(QString::number(profile.tid));
+        ui->textBoxSIDRS->setText(QString::number(profile.sid));
+        ui->textBoxTIDFRLG->setText(QString::number(profile.tid));
+        ui->textBoxSIDFRLG->setText(QString::number(profile.sid));
+        ui->profileTID->setText(QString::number(profile.tid));
+        ui->profileSID->setText(QString::number(profile.sid));
+        ui->profileGame->setText(profile.getVersion());
     }
-}
-
-void Eggs3::on_pushButtonProfileManagerEmerald_clicked()
-{
-    ProfileManager3 *manager = new ProfileManager3();
-    manager->setAttribute(Qt::WA_QuitOnClose, false);
-    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
-    manager->show();
-}
-
-void Eggs3::on_pushButtonProfileManagerRS_clicked()
-{
-    ProfileManager3 *manager = new ProfileManager3();
-    manager->setAttribute(Qt::WA_QuitOnClose, false);
-    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
-    manager->show();
-}
-
-void Eggs3::on_pushButtonProfileManagerFRLG_clicked()
-{
-    ProfileManager3 *manager = new ProfileManager3();
-    manager->setAttribute(Qt::WA_QuitOnClose, false);
-    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
-    manager->show();
 }
 
 void Eggs3::on_pushButtonAnyAbilityEmerald_clicked()
@@ -331,4 +314,11 @@ void Eggs3::on_pushButtonGenerateFRLG_clicked()
 
     vector<Frame3> frames = generator.generate(compare);
     frlg->setModel(frames);
+}
+
+void Eggs3::on_pushButtonProfileManager_clicked()
+{
+    ProfileManager3 *manager = new ProfileManager3();
+    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
+    manager->show();
 }

@@ -26,7 +26,6 @@ ProfileManager3NewEdit::ProfileManager3NewEdit(QWidget *parent) :
 {
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
-    setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
 
     setupModels();
@@ -36,12 +35,12 @@ ProfileManager3NewEdit::ProfileManager3NewEdit(Profile3 profile, QWidget *parent
 {
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
-    setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
 
     setupModels();
 
     ui->lineEditProfile->setText(profile.profileName);
-    ui->comboBoxVersion->setCurrentIndex(profile.version);
+    ui->comboBoxVersion->setCurrentIndex(ui->comboBoxVersion->findData(profile.version));
     ui->comboBoxLanguage->setCurrentIndex(profile.language);
     ui->textBoxTID->setText(QString::number(profile.tid));
     ui->textBoxSID->setText(QString::number(profile.sid));
@@ -53,6 +52,16 @@ ProfileManager3NewEdit::ProfileManager3NewEdit(Profile3 profile, QWidget *parent
 ProfileManager3NewEdit::~ProfileManager3NewEdit()
 {
     delete ui;
+}
+
+Profile3 ProfileManager3NewEdit::getNewProfile()
+{
+    return fresh;
+}
+
+Profile3 ProfileManager3NewEdit::getOriginal()
+{
+    return original;
 }
 
 void ProfileManager3NewEdit::changeEvent(QEvent *event)
@@ -74,6 +83,14 @@ void ProfileManager3NewEdit::setupModels()
 {
     ui->textBoxTID->setValues(0, 48, true);
     ui->textBoxSID->setValues(0, 48, true);
+
+    ui->comboBoxVersion->setItemData(0, Ruby);
+    ui->comboBoxVersion->setItemData(1, Sapphire);
+    ui->comboBoxVersion->setItemData(2, FireRed);
+    ui->comboBoxVersion->setItemData(3, LeafGreen);
+    ui->comboBoxVersion->setItemData(4, Emerald);
+    ui->comboBoxVersion->setItemData(5, Gales);
+    ui->comboBoxVersion->setItemData(6, Colosseum);
 }
 
 void ProfileManager3NewEdit::on_pushButtonAccept_clicked()
@@ -87,17 +104,8 @@ void ProfileManager3NewEdit::on_pushButtonAccept_clicked()
         return;
     }
 
-    Profile3 profile(ui->lineEditProfile->text(), ui->comboBoxVersion->currentIndex(), ui->textBoxTID->text().toUInt(NULL, 10),
+    fresh = Profile3(ui->lineEditProfile->text(), (Game)ui->comboBoxVersion->currentData().toInt(), ui->textBoxTID->text().toUInt(NULL, 10),
                      ui->textBoxSID->text().toUInt(NULL, 10), ui->comboBoxLanguage->currentIndex(), ui->checkBoxDeadBattery->isChecked());
-
-    if (isEditing)
-    {
-        emit editProfile(profile, original);
-    }
-    else
-    {
-        emit newProfile(profile);
-    }
 
     done(QDialog::Accepted);
 }

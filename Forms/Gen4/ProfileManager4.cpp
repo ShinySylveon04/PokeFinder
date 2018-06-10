@@ -17,12 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ProfileManager3.hpp"
-#include "ui_ProfileManager3.h"
+#include "ProfileManager4.hpp"
+#include "ui_ProfileManager4.h"
 
-ProfileManager3::ProfileManager3(QWidget *parent) :
+ProfileManager4::ProfileManager4(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::ProfileManager3)
+    ui(new Ui::ProfileManager4)
 {
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
@@ -31,13 +31,13 @@ ProfileManager3::ProfileManager3(QWidget *parent) :
     setupModels();
 }
 
-ProfileManager3::~ProfileManager3()
+ProfileManager4::~ProfileManager4()
 {
     delete ui;
     delete model;
 }
 
-void ProfileManager3::changeEvent(QEvent *event)
+void ProfileManager4::changeEvent(QEvent *event)
 {
     if (event != NULL)
     {
@@ -52,41 +52,32 @@ void ProfileManager3::changeEvent(QEvent *event)
     }
 }
 
-void ProfileManager3::setupModels()
+void ProfileManager4::setupModels()
 {
-    model->setModel(Profile3::loadProfileList());
+    model->setModel(Profile4::loadProfileList());
     ui->tableView->setModel(model);
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
-void ProfileManager3::on_pushButtonNew_clicked()
+void ProfileManager4::on_pushButtonNew_clicked()
 {
-    ProfileManager3NewEdit *dialog = new ProfileManager3NewEdit();
-    connect(dialog, SIGNAL (newProfile(Profile3)), this, SLOT (registerProfile(Profile3)));
-    dialog->exec();
+    ProfileManager4NewEdit *dialog = new ProfileManager4NewEdit();
+    if (dialog->exec() == QDialog::Accepted)
+    {
+        Profile4 profile = dialog->getNewProfile();
+        profile.saveProfile();
+        model->addItem(profile);
+        emit updateProfiles();
+    }
+    delete dialog;
 }
 
-void ProfileManager3::registerProfile(Profile3 profile)
-{
-    profile.saveProfile();
-    model->addItem(profile);
-    emit updateProfiles();
-}
-
-void ProfileManager3::editProfile(Profile3 profile, Profile3 original)
-{
-    profile.updateProfile(original);
-    int r = ui->tableView->currentIndex().row();
-    model->updateProfile(profile, r);
-    emit updateProfiles();
-}
-
-void ProfileManager3::on_pushButtonOk_clicked()
+void ProfileManager4::on_pushButtonOk_clicked()
 {
     this->close();
 }
 
-void ProfileManager3::on_pushButtonEdit_clicked()
+void ProfileManager4::on_pushButtonEdit_clicked()
 {
     int r = ui->tableView->currentIndex().row();
 
@@ -98,12 +89,19 @@ void ProfileManager3::on_pushButtonEdit_clicked()
         return;
     }
 
-    ProfileManager3NewEdit *dialog = new ProfileManager3NewEdit(model->getProfile(r));
-    connect(dialog, SIGNAL (editProfile(Profile3, Profile3)), this, SLOT (editProfile(Profile3, Profile3)));
-    dialog->exec();
+    ProfileManager4NewEdit *dialog = new ProfileManager4NewEdit(model->getProfile(r));
+    if (dialog->exec() == QDialog::Accepted)
+    {
+        Profile4 profile = dialog->getNewProfile();
+        profile.updateProfile(dialog->getOriginal());
+        int r = ui->tableView->currentIndex().row();
+        model->updateProfile(profile, r);
+        emit updateProfiles();
+    }
+    delete dialog;
 }
 
-void ProfileManager3::on_pushButtonDelete_clicked()
+void ProfileManager4::on_pushButtonDelete_clicked()
 {
     int r = ui->tableView->currentIndex().row();
 
@@ -115,10 +113,10 @@ void ProfileManager3::on_pushButtonDelete_clicked()
         return;
     }
 
-    Profile3 profile = model->getProfile(r);
+    Profile4 profile = model->getProfile(r);
     profile.deleteProfile();
 
     model->removeProfile(r);
+
+    emit updateProfiles();
 }
-
-

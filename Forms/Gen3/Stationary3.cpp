@@ -30,20 +30,24 @@ Stationary3::Stationary3(QWidget *parent) :
     ui->label->setVisible(false);
     ui->comboBoxShadow->setVisible(false);
 
-    setupModels();
     updateProfiles();
+    setupModels();
 
     qRegisterMetaType<vector<Frame3>>("vector<Frame3>");
     connect(this, SIGNAL(updateView(vector<Frame3>)), this, SLOT(updateViewSearcher(vector<Frame3>)));
-    connect(this, &Stationary3::updateProgess, this, &Stationary3::updateProgressBar);
+    connect(this, &Stationary3::updateProgress, this, &Stationary3::updateProgressBar);
 }
 
 Stationary3::~Stationary3()
 {
+    QSettings setting;
+    setting.setValue("stationary3Profile", ui->comboBoxProfiles->currentIndex());
+
     delete ui;
     delete s;
     delete g;
     delete generatorMenu;
+    delete searcherMenu;
 }
 
 void Stationary3::changeEvent(QEvent *event)
@@ -54,6 +58,7 @@ void Stationary3::changeEvent(QEvent *event)
         {
             case QEvent::LanguageChange:
                 ui->retranslateUi(this);
+                on_comboBoxMethodSearcher_currentIndexChanged(ui->comboBoxMethodSearcher->currentIndex());
                 break;
             default:
                 break;
@@ -64,10 +69,8 @@ void Stationary3::changeEvent(QEvent *event)
 void Stationary3::setupModels()
 {
     ui->tableViewGenerator->setModel(g);
-    ui->tableViewGenerator->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewSearcher->setModel(s);
-    ui->tableViewSearcher->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->initialSeedGenerator->setValues(0, 32, false);
     ui->idGenerator->setValues(0, 48, true);
@@ -101,16 +104,16 @@ void Stationary3::setupModels()
     ui->comboBoxHiddenPowerGenerator->setup();
     ui->comboBoxHiddenPowerSearcher->setup();
 
-    QAction *setTargetFrame = new QAction("Set Target Frame", this);
-    QAction *jumpToTarget = new QAction("Jump to Target Frame", this);
-    QAction *centerTo1Second = new QAction("Center to +/- 1 Second and Set as Target Frame", this);
-    QAction *centerTo2Seconds = new QAction("Center to +/- 2 Seconds and Set as Target Frame", this);
-    QAction *centerTo3Seconds = new QAction("Center to +/- 3 Seconds and Set as Target Frame", this);
-    QAction *centerTo5Seconds = new QAction("Center to +/- 5 Seconds and Set as Target Frame", this);
-    QAction *centerTo10Seconds = new QAction("Center to +/- 10 Seconds and Set as Target Frame", this);
-    QAction *centerTo1Minute = new QAction("Center to +/- 1 Minute and Set as Target Frame", this);
-    QAction *outputToTxt = new QAction("Output Results to TXT", this);
-    QAction *outputToCSV = new QAction("Output Results to CSV", this);
+    QAction *setTargetFrame = new QAction(tr("Set Target Frame"), this);
+    QAction *jumpToTarget = new QAction(tr("Jump to Target Frame"), this);
+    QAction *centerTo1Second = new QAction(tr("Center to +/- 1 Second and Set as Target Frame"), this);
+    QAction *centerTo2Seconds = new QAction(tr("Center to +/- 2 Seconds and Set as Target Frame"), this);
+    QAction *centerTo3Seconds = new QAction(tr("Center to +/- 3 Seconds and Set as Target Frame"), this);
+    QAction *centerTo5Seconds = new QAction(tr("Center to +/- 5 Seconds and Set as Target Frame"), this);
+    QAction *centerTo10Seconds = new QAction(tr("Center to +/- 10 Seconds and Set as Target Frame"), this);
+    QAction *centerTo1Minute = new QAction(tr("Center to +/- 1 Minute and Set as Target Frame"), this);
+    QAction *outputToTxt = new QAction(tr("Output Results to TXT"), this);
+    QAction *outputToCSV = new QAction(tr("Output Results to CSV"), this);
 
     connect(setTargetFrame, &QAction::triggered, this, &Stationary3::setTargetFrameGenerator);
     connect(jumpToTarget, &QAction::triggered, this, &Stationary3::jumpToTargetGenerator);
@@ -154,27 +157,14 @@ void Stationary3::setupModels()
     generatorMenu->addAction(outputToTxt);
     generatorMenu->addAction(outputToCSV);
 
-    QAction *copySeedToClipboard = new QAction("Copy Seed to Clipboard", this);
+    QAction *copySeedToClipboard = new QAction(tr("Copy Seed to Clipboard"), this);
+    QAction *seedToTime = new QAction(tr("Generate times for seed"), this);
 
     connect(copySeedToClipboard, &QAction::triggered, this, &Stationary3::copySeedToClipboard);
+    connect(seedToTime, &QAction::triggered, this, &Stationary3::seedToTime);
 
     searcherMenu->addAction(copySeedToClipboard);
-}
-
-void Stationary3::on_saveProfileGenerator_clicked()
-{
-    ProfileManager3 *manager = new ProfileManager3();
-    manager->setAttribute(Qt::WA_QuitOnClose, false);
-    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
-    manager->show();
-}
-
-void Stationary3::on_saveSearcher_clicked()
-{
-    ProfileManager3 *manager = new ProfileManager3();
-    manager->setAttribute(Qt::WA_QuitOnClose, false);
-    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
-    manager->show();
+    searcherMenu->addAction(seedToTime);
 }
 
 void Stationary3::refreshProfiles()
@@ -186,32 +176,40 @@ void Stationary3::updateProfiles()
 {
     profiles = Profile3::loadProfileList();
 
-    QStandardItemModel *profile = new QStandardItemModel((int)profiles.size() + 1, 1, this);
-    QStandardItem *firstProfile = new QStandardItem(tr("None"));
-    profile->setItem(0, firstProfile);
+    ui->comboBoxProfiles->clear();
+
+    ui->comboBoxProfiles->addItem(tr("None"));
     for (int i = 0; i < (int)profiles.size(); i++)
-    {
-        QStandardItem *item = new QStandardItem(profiles.at(i).profileName);
-        profile->setItem(i + 1, item);
-    }
-    ui->comboBoxProfiles->setModel(profile);
+        ui->comboBoxProfiles->addItem(profiles.at(i).profileName);
+
+    QSettings setting;
+    int val = setting.value("stationary3Profile").toInt();
+    if (val < ui->comboBoxProfiles->count())
+        ui->comboBoxProfiles->setCurrentIndex(val);
 }
 
 void Stationary3::on_comboBoxProfiles_currentIndexChanged(int index)
 {
-    if (index == 0)
+    if (index <= 0)
     {
         ui->idGenerator->setText("12345");
         ui->sidGenerator->setText("54321");
         ui->idSearcher->setText("12345");
         ui->sidSearcher->setText("54321");
+        ui->profileTID->setText("12345");
+        ui->profileSID->setText("54321");
+        ui->profileGame->setText(tr("Emerald"));
     }
     else
     {
-        ui->idGenerator->setText(QString::number(profiles.at(index - 1).tid));
-        ui->sidGenerator->setText(QString::number(profiles.at(index - 1).sid));
-        ui->idSearcher->setText(QString::number(profiles.at(index - 1).tid));
-        ui->sidSearcher->setText(QString::number(profiles.at(index - 1).sid));
+        auto profile = profiles.at(index - 1);
+        ui->idGenerator->setText(QString::number(profile.tid));
+        ui->sidGenerator->setText(QString::number(profile.sid));
+        ui->idSearcher->setText(QString::number(profile.tid));
+        ui->sidSearcher->setText(QString::number(profile.sid));
+        ui->profileTID->setText(QString::number(profile.tid));
+        ui->profileSID->setText(QString::number(profile.sid));
+        ui->profileGame->setText(profile.getVersion());
     }
 }
 
@@ -281,15 +279,14 @@ void Stationary3::on_generate_clicked()
 
 void Stationary3::search()
 {
-    ui->progressBar->setValue(0);
     u32 tid = ui->idSearcher->text().toUInt(NULL, 10);
     u32 sid = ui->sidSearcher->text().toUInt(NULL, 10);
 
     int genderRatioIndex = ui->comboBoxGenderRatioSearcher->currentIndex();
-    Searcher3 searcher = Searcher3(tid, sid, genderRatioIndex);
     FrameCompare compare = FrameCompare(ui->ivFilterSearcher->getEvals(), ui->ivFilterSearcher->getValues(), ui->comboBoxGenderSearcher->currentIndex(),
                                         genderRatioIndex, ui->comboBoxAbilitySearcher->currentIndex(), ui->comboBoxNatureSearcher->getChecked(),
                                         ui->comboBoxHiddenPowerSearcher->getChecked(), ui->checkBoxShinySearcher->isChecked(), false);
+    Searcher3 searcher = Searcher3(tid, sid, genderRatioIndex, compare);
 
     searcher.setup((Method)ui->comboBoxMethodSearcher->currentData().toInt(NULL));
     if (searcher.frameType == XD || searcher.frameType == Colo)
@@ -312,17 +309,18 @@ void Stationary3::search()
                     {
                         for (u32 f = min[5]; f <= max[5]; f++)
                         {
-                            vector<Frame3> frames = searcher.search(a, b, c, d, e, f, compare);
+                            vector<Frame3> frames = searcher.search(a, b, c, d, e, f);
 
                             if (!frames.empty())
                                 emit updateView(frames);
 
-                            emit updateProgess(1);
+                            progress++;
 
                             if (cancel)
                             {
                                 isSearching = false;
                                 ui->search->setText(tr("Search"));
+                                emit updateProgress();
                                 return;
                             }
                         }
@@ -333,6 +331,16 @@ void Stationary3::search()
     }
     isSearching = false;
     ui->search->setText(tr("Search"));
+    emit updateProgress();
+}
+
+void Stationary3::updateSearch()
+{
+    while (isSearching && !cancel)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        emit updateProgress();
+    }
 }
 
 void Stationary3::on_search_clicked()
@@ -345,11 +353,19 @@ void Stationary3::on_search_clicked()
     {
         s->clear();
         s->setMethod((Method)ui->comboBoxMethodSearcher->currentData().toInt(NULL));
+
+        ui->progressBar->setValue(0);
+        progress = 0;
+
         isSearching = true;
         cancel = false;
         ui->search->setText(tr("Cancel"));
+
         std::thread job(&Stationary3::search, this);
         job.detach();
+
+        std::thread update(&Stationary3::updateSearch, this);
+        update.detach();
     }
 }
 
@@ -376,31 +392,23 @@ void Stationary3::on_comboBoxMethodSearcher_currentIndexChanged(int index)
 
     if (method == XD)
     {
-        QStringList s;
-        s << tr("Altaria") << tr("Arbok") << tr("Banette");
-        s << tr("Butterfree") << tr("Chansey") << tr("Delcatty");
-        s << tr("Dodrio") << tr("Dragonite") << tr("Dugtrio");
-        s << tr("Duskull") << tr("Electabuzz") << tr("Farfetch'd");
-        s << tr("Golduck") << tr("Grimer") << tr("Growlithe");
-        s << tr("Gulpin (Citadark)") << tr("Gulpin (Initial)") << tr("Gulpin (Phenac)");
-        s << tr("Hitmonchan") << tr("Hitmonlee") << tr("Hypno");
-        s << tr("Kangaskhan") << tr("Lapras") << tr("Ledyba");
-        s << tr("Lickitung") << tr("Lunatone") << tr("Magcargo");
-        s << tr("Magmar") << tr("Magneton") << tr("Makuhita");
-        s << tr("Manectric") << tr("Marowak") << tr("Mawile");
-        s << tr("Meowth") << tr("Mr. Mime") << tr("Natu");
-        s << tr("Nosepass") << tr("Numel") << tr("Paras");
-        s << tr("Pidgeotto") << tr("Pineco") << tr("Pinsir");
-        s << tr("Poliwrath") << tr("Poochyena") << tr("Primeape");
-        s << tr("Ralts") << tr("Rapidash") << tr("Raticate");
-        s << tr("Roselia") << tr("Sableye") << tr("Salamence");
-        s << tr("Scyther") << tr("Seedot (Citadark)") << tr("Seedot (Initial)");
-        s << tr("Seedot (Phenac)") << tr("Seel") << tr("Shroomish");
-        s << tr("Snorlax") << tr("Snorunt") << tr("Solrock");
-        s << tr("Spearow") << tr("Spheal (Citadark)") << tr("Spheal (Initial)");
-        s << tr("Spheal (Phenac)") << tr("Spinarak") << tr("Starmie");
-        s << tr("Swinub") << tr("Tangela") << tr("Venomoth");
-        s << tr("Voltorb") << tr("Vulpix") << tr("Weepinbell");
+        QStringList s = Translator::getSpecies({ 334, 24, 354, 12, 113, 301, 85, 149, 51, 355, 125, 83, 55, 88, 58, 316,
+                                               316, 316, 107, 106, 97, 115, 131, 165, 108, 337, 219, 179, 126, 82, 296, 310,
+                                               105, 303, 52, 122, 177, 299, 322, 46, 17, 204, 127, 62, 261, 57, 280, 78,
+                                               20, 315, 302, 373, 123, 273, 273, 273, 86, 285, 143, 361, 338, 21, 363, 363,
+                                               363, 167, 121, 220, 114, 49, 100, 37, 70
+                                               });
+
+        s[15] += tr(" (Citadark)");
+        s[16] += tr(" (Initial)");
+        s[17] += tr(" (Phenac)");
+        s[53] += tr(" (Citadark)");
+        s[54] += tr(" (Initial)");
+        s[55] += tr(" (Phenac)");
+        s[62] += tr(" (Citadark)");
+        s[63] += tr(" (Initial)");
+        s[64] += tr(" (Phenac)");
+        s[27] += tr(" (E-Reader)");
 
         ui->comboBoxShadow->addItems(s);
         ui->comboBoxShadow->setVisible(true);
@@ -408,9 +416,7 @@ void Stationary3::on_comboBoxMethodSearcher_currentIndexChanged(int index)
     }
     else if (method == Colo)
     {
-        QStringList s;
-        s << tr("Gligar") << tr("Heracross") << tr("Makuhita") << tr("Murkrow") << tr("Ursaring");
-
+        QStringList s = Translator::getSpecies({207, 214, 296, 198, 217});
         ui->comboBoxShadow->addItems(s);
         ui->comboBoxShadow->setVisible(true);
         ui->label->setVisible(true);
@@ -420,11 +426,6 @@ void Stationary3::on_comboBoxMethodSearcher_currentIndexChanged(int index)
         ui->comboBoxShadow->setVisible(false);
         ui->label->setVisible(false);
     }
-}
-
-void Stationary3::updateProgressBar(int i)
-{
-    ui->progressBar->setValue(ui->progressBar->value() + i);
 }
 
 void Stationary3::centerFramesAndSetTargetGenerator(u32 centerFrames)
@@ -445,6 +446,14 @@ void Stationary3::centerFramesAndSetTargetGenerator(u32 centerFrames)
     targetFrame = ui->tableViewGenerator->model()->index(selectedIndex, 0);
 
     jumpToTargetGenerator();
+}
+
+void Stationary3::seedToTime()
+{
+    u32 seed = s->data(s->index(lastIndex.row(), 0), Qt::DisplayRole).toString().toUInt(NULL, 16);
+    SeedToTime3 *seedToTime = new SeedToTime3(seed);
+    seedToTime->show();
+    seedToTime->raise();
 }
 
 void Stationary3::setTargetFrameGenerator()
@@ -542,7 +551,12 @@ void Stationary3::outputToCSV()
 
 void Stationary3::copySeedToClipboard()
 {
-    QApplication::clipboard()->setText(ui->tableViewSearcher->model()->data(ui->tableViewSearcher->model()->index(lastIndex.row(), 0)).toString());
+    QApplication::clipboard()->setText(s->data(s->index(lastIndex.row(), 0), Qt::DisplayRole).toString());
+}
+
+void Stationary3::updateProgressBar()
+{
+    ui->progressBar->setValue(progress);
 }
 
 void Stationary3::on_tableViewGenerator_customContextMenuRequested(const QPoint &pos)
@@ -563,4 +577,11 @@ void Stationary3::on_tableViewSearcher_customContextMenuRequested(const QPoint &
     lastIndex = ui->tableViewSearcher->indexAt(pos);
 
     searcherMenu->popup(ui->tableViewSearcher->viewport()->mapToGlobal(pos));
+}
+
+void Stationary3::on_pushButtonProfileManager_clicked()
+{
+    ProfileManager3 *manager = new ProfileManager3();
+    connect(manager, SIGNAL(updateProfiles()), this, SLOT(refreshProfiles()));
+    manager->show();
 }

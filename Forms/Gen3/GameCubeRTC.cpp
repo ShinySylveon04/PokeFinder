@@ -37,6 +37,8 @@ GameCubeRTC::GameCubeRTC(QWidget *parent) :
 
 GameCubeRTC::~GameCubeRTC()
 {
+    saveSettings();
+
     delete ui;
     delete model;
     delete contextMenu;
@@ -73,6 +75,20 @@ void GameCubeRTC::setupModels()
     connect(copySeed, &QAction::triggered, this, &GameCubeRTC::copySeed);
 
     contextMenu->addAction(copySeed);
+
+    loadSettings();
+}
+
+void GameCubeRTC::saveSettings()
+{
+    QSettings setting;
+    setting.setValue("startSeed", ui->textBoxStartSeed->text());
+}
+
+void GameCubeRTC::loadSettings()
+{
+    QSettings setting;
+    if (setting.contains("startSeed")) ui->textBoxStartSeed->setText(setting.value("startSeed").toString());
 }
 
 void GameCubeRTC::updateTableView(QList<QStandardItem *> row)

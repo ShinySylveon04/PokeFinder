@@ -27,12 +27,17 @@
 #include <PokeFinderCore/Objects/Nature.hpp>
 #include <PokeFinderCore/Objects/Power.hpp>
 #include <PokeFinderCore/Gen3/Profile3.hpp>
-#include <Forms/ProfileManager/ProfileManager3.hpp>
+#include <Forms/Gen3/ProfileManager3.hpp>
+#include <PokeFinderCore/Gen3/EncounterArea3.hpp>
+#include <PokeFinderCore/Translator.hpp>
 #include <Models/Gen3/Wild3Model.hpp>
 #include <Models/Gen3/Searcher3Model.hpp>
+#include <Forms/Gen3/SeedToTime3.hpp>
 #include <QMenu>
 #include <thread>
 #include <QFileDialog>
+#include <QClipboard>
+#include <QSettings>
 
 namespace Ui
 {
@@ -49,42 +54,62 @@ protected:
 signals:
     void updateView(vector<Frame3>);
     void alertProfiles(int);
-    void updateProgress(int);
+    void updateProgress();
 
 private:
     Ui::Wild3 *ui;
     vector<Profile3> profiles;
     bool isSearching = false;
     bool cancel = false;
+    u32 progress;
     Searcher3Model *s = new Searcher3Model(this, Method1);
     Wild3Model *g = new Wild3Model(this);
-    QMenu *contextMenu = new QMenu(this);
+    QMenu *generatorMenu = new QMenu(this);
+    QMenu *searcherMenu = new QMenu(this);
     QModelIndex lastIndex;
     QModelIndex targetFrame;
+    vector<EncounterArea3> encounterGenerator;
+    vector<EncounterArea3> encounterSearcher;
 
     void setupModels();
     void search();
+    void updateSearch();
+    void updateLocationsSearcher();
+    void updatePokemonSearcher();
+    void updateLocationsGenerator();
+    void updatePokemonGenerator();
 
 private slots:
     void on_generate_clicked();
     void refreshProfiles();
-    void on_saveProfileGenerator_clicked();
     void on_anyNatureGenerator_clicked();
     void on_anyHiddenPowerGenerator_clicked();
     void on_search_clicked();
-    void on_saveSearcher_clicked();
     void on_anyNatureSearcher_clicked();
     void on_anyHiddenPowerSearcher_clicked();
     void updateViewSearcher(vector<Frame3> frames);
     void on_checkBoxDelayGenerator_clicked();
     void on_comboBoxProfiles_currentIndexChanged(int index);
     void on_tableViewGenerator_customContextMenuRequested(const QPoint &pos);
+    void on_tableViewSearcher_customContextMenuRequested(const QPoint &pos);
+    void copySeedToClipboard();
     void setTargetFrameGenerator();
     void jumpToTargetGenerator();
     void centerFramesAndSetTargetGenerator(u32 centerFrames);
+    void seedToTime();
     void outputToTxt();
     void outputToCSV();
-    void updateProgressBar(int i);
+    void updateProgressBar();
+    void on_pushButtonLeadGenerator_clicked();
+    void on_pushButtonProfileManager_clicked();
+    void on_comboBoxEncounterGenerator_currentIndexChanged(int index);
+    void on_anySlotGenerator_clicked();
+    void on_comboBoxEncounterSearcher_currentIndexChanged(int index);
+    void on_pushButton_clicked();
+    void on_comboBoxLocationSearcher_currentIndexChanged(int index);
+    void on_comboBoxPokemonSearcher_currentIndexChanged(int index);
+    void on_comboBoxLocationGenerator_currentIndexChanged(int index);
+    void on_comboBoxPokemonGenerator_currentIndexChanged(int index);
 
 public:
     explicit Wild3(QWidget *parent = 0);

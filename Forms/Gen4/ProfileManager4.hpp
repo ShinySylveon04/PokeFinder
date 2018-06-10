@@ -17,25 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef PROFILEMANAGER3NEWEDIT_HPP
-#define PROFILEMANAGER3NEWEDIT_HPP
+#ifndef PROFILEMANAGER4_HPP
+#define PROFILEMANAGER4_HPP
 
-#include <QDialog>
-#include <QString>
-#include <QMessageBox>
-#include <QObject>
-#include <QStandardItemModel>
-#include <QList>
-#include <PokeFinderCore/Gen3/Profile3.hpp>
+#include <QMainWindow>
+#include <Forms/Gen4/ProfileManager4NewEdit.hpp>
+#include <PokeFinderCore/Gen4/Profile4.hpp>
+#include <Models/Gen4/Profile4Model.hpp>
 
+using std::vector;
 typedef uint32_t u32;
 
 namespace Ui
 {
-    class ProfileManager3NewEdit;
+    class ProfileManager4;
 }
 
-class ProfileManager3NewEdit : public QDialog
+class ProfileManager4 : public QMainWindow
 {
     Q_OBJECT
 
@@ -43,26 +41,24 @@ protected:
     void changeEvent(QEvent *);
 
 signals:
-    void newProfile(Profile3);
-    void editProfile(Profile3, Profile3);
+    void updateProfiles();
 
 private:
-    Ui::ProfileManager3NewEdit *ui;
-    bool isEditing = false;
-    Profile3 original;
+    Ui::ProfileManager4 *ui;
+    Profile4Model *model = new Profile4Model(this);
 
     void setupModels();
 
 private slots:
-    void on_pushButtonAccept_clicked();
-    void on_pushButtonCancel_clicked();
-    void on_comboBoxVersion_currentIndexChanged(int index);
+    void on_pushButtonNew_clicked();
+    void on_pushButtonOk_clicked();
+    void on_pushButtonEdit_clicked();
+    void on_pushButtonDelete_clicked();
 
 public:
-    explicit ProfileManager3NewEdit(QWidget *parent = 0);
-    explicit ProfileManager3NewEdit( Profile3 profile, QWidget *parent = 0);
-    ~ProfileManager3NewEdit();
+    explicit ProfileManager4(QWidget *parent = 0);
+    ~ProfileManager4();
 
 };
 
-#endif // PROFILEMANAGER3NEWEDIT_HPP
+#endif // PROFILEMANAGER4_HPP

@@ -26,6 +26,7 @@
 #include <QList>
 #include <QStandardItem>
 #include <QMessageBox>
+#include <QSettings>
 #include <PokeFinderCore/RNG/LCRNG.hpp>
 
 typedef uint32_t u32;
@@ -45,8 +46,11 @@ protected:
 private:
     Ui::SeedToTime3 *ui;
     QStandardItemModel *model = new QStandardItemModel(this);
+    u32 frame = 1;
 
     void setupModels();
+    void saveSettings();
+    void loadSettings();
     u32 originSeed(u32 seed);
     void seedToTime(u32 seed, u32 year);
 
@@ -55,6 +59,7 @@ private slots:
 
 public:
     explicit SeedToTime3(QWidget *parent = 0);
+    explicit SeedToTime3(u32 seed, QWidget *parent = 0);
     ~SeedToTime3();
 
 };

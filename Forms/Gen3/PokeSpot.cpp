@@ -34,6 +34,8 @@ PokeSpot::PokeSpot(QWidget *parent) :
 
 PokeSpot::~PokeSpot()
 {
+    saveSettings();
+
     delete ui;
     delete model;
 }
@@ -81,6 +83,22 @@ void PokeSpot::setupModels()
 
     ui->comboBoxNature->setup();
     ui->comboBoxSpotType->setup();
+
+    loadSettings();
+}
+
+void PokeSpot::saveSettings()
+{
+    QSettings setting;
+    setting.setValue("pokespotTID", ui->textBoxTID->text());
+    setting.setValue("pokespotSID", ui->textBoxSID->text());
+}
+
+void PokeSpot::loadSettings()
+{
+    QSettings setting;
+    if (setting.contains("pokespotTID")) ui->textBoxTID->setText(setting.value("pokespotTID").toString());
+    if (setting.contains("pokespotSID")) ui->textBoxSID->setText(setting.value("pokespotSID").toString());
 }
 
 void PokeSpot::on_pushButtonGenerate_clicked()

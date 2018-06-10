@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string notr="true">PokéFinder 1.2.0</string>
+   <string notr="true">PokéFinder 1.3.1</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -98,6 +98,12 @@ QMenu::item::selected {
          <height>23</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
        <property name="text">
         <string>Stationary</string>
        </property>
@@ -110,6 +116,12 @@ QMenu::item::selected {
          <width>191</width>
          <height>23</height>
         </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
        </property>
        <property name="text">
         <string>Wild</string>
@@ -124,6 +136,12 @@ QMenu::item::selected {
          <height>23</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
        <property name="text">
         <string>Egg</string>
        </property>
@@ -137,6 +155,12 @@ QMenu::item::selected {
          <height>23</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
        <property name="text">
         <string>IDs</string>
        </property>
@@ -148,6 +172,76 @@ QMenu::item::selected {
       <property name="title">
        <string>Gen 4</string>
       </property>
+      <widget class="QPushButton" name="pushButtonStationary4">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>191</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Stationary</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButtonWild4">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>191</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Wild</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButtonEgg4">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>90</y>
+         <width>191</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Egg</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButtonIDs4">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>120</y>
+         <width>191</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>23</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>IDs</string>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -177,14 +271,22 @@ QMenu::item::selected {
      <string>Gen 3 Tools</string>
     </property>
     <addaction name="action16BitSeedtoTime"/>
-    <addaction name="actionJirachiGeneration"/>
+    <addaction name="actionJirachiPattern"/>
     <addaction name="actionPokeSpot"/>
     <addaction name="actionIVtoPID"/>
     <addaction name="actionGameCubeRTC"/>
     <addaction name="actionPIDtoIV"/>
    </widget>
+   <widget class="QMenu" name="menuGen_4_Tools">
+    <property name="title">
+     <string>Gen 4 Tools</string>
+    </property>
+    <addaction name="actionSeed_to_Time"/>
+    <addaction name="actionIV_to_PID"/>
+   </widget>
    <addaction name="menuLanguage"/>
    <addaction name="menuGen3Tools"/>
+   <addaction name="menuGen_4_Tools"/>
    <addaction name="menuTools"/>
   </widget>
   <action name="actionResearcher">
@@ -197,9 +299,9 @@ QMenu::item::selected {
     <string>16-Bit Seed to Time</string>
    </property>
   </action>
-  <action name="actionJirachiGeneration">
+  <action name="actionJirachiPattern">
    <property name="text">
-    <string>Jirachi Generation</string>
+    <string>Jirachi Pattern</string>
    </property>
   </action>
   <action name="actionPokeSpot">
@@ -220,6 +322,16 @@ QMenu::item::selected {
   <action name="actionPIDtoIV">
    <property name="text">
     <string>PID to IV</string>
+   </property>
+  </action>
+  <action name="actionSeed_to_Time">
+   <property name="text">
+    <string>Seed to Time</string>
+   </property>
+  </action>
+  <action name="actionIV_to_PID">
+   <property name="text">
+    <string>IV to PID</string>
    </property>
   </action>
  </widget>
