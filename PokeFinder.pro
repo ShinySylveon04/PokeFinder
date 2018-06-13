@@ -70,7 +70,8 @@ FORMS += \
     Forms/Gen4/Wild4.ui \
     Forms/Util/IVtoPID.ui \
     Forms/Util/Researcher.ui \
-    Forms/MainWindow.ui
+    Forms/MainWindow.ui \
+    Forms/Util/Timer.ui
 
 HEADERS += \
     Forms/Controls/IVFilter.hpp \
@@ -154,7 +155,8 @@ HEADERS += \
     PokeFinderCore/RNG/TinyMT.hpp \
     PokeFinderCore/Translator.hpp \
     Util/DateTime.hpp \
-    Util/ResearcherFrame.hpp
+    Forms/Util/ResearcherFrame.hpp \
+    Forms/Util/Timer.hpp
 
 SOURCES += \
     Forms/Controls/IVFilter.cpp \
@@ -233,4 +235,5 @@ SOURCES += \
     main.cpp \
     PokeFinderCore/Objects/Searcher.cpp \
     PokeFinderCore/Objects/Generator.cpp \
-    PokeFinderCore/Objects/Egg.cpp
+    PokeFinderCore/Objects/Egg.cpp \
+    Forms/Util/Timer.cpp
