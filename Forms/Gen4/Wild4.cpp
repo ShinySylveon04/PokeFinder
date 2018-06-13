@@ -28,8 +28,8 @@ Wild4::Wild4(QWidget *parent) :
 
     setAttribute(Qt::WA_QuitOnClose, false);
 
-    updateProfiles();
     setupModels();
+    updateProfiles();
 
     qRegisterMetaType<vector<Frame4>>("vector<Frame4>");
     connect(this, &Wild4::updateView, this, &Wild4::updateViewSearcher);
@@ -68,10 +68,8 @@ Wild4::~Wild4()
 void Wild4::setupModels()
 {
     ui->tableViewGenerator->setModel(g);
-    ui->tableViewGenerator->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewSearcher->setModel(s);
-    ui->tableViewSearcher->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->initialSeedGenerator->setValues(0, 32, false);
     ui->idGenerator->setValues(0, 48, true);
@@ -138,7 +136,7 @@ void Wild4::updateProfiles()
     ui->comboBoxProfiles->clear();
 
     for (int i = 0; i < (int)profiles.size(); i++)
-        ui->comboBoxProfiles->addItem(profiles.at(i).profileName);
+        ui->comboBoxProfiles->addItem(profiles[i].getProfileName());
 
     QSettings setting;
     int val = setting.value("wild4Profile").toInt();
@@ -150,15 +148,16 @@ void Wild4::on_comboBoxProfiles_currentIndexChanged(int index)
 {
     auto profile = profiles[index >= 0 ? index : 0];
 
-    ui->idGenerator->setText(QString::number(profile.tid));
-    ui->sidGenerator->setText(QString::number(profile.sid));
-    ui->idSearcher->setText(QString::number(profile.tid));
-    ui->sidSearcher->setText(QString::number(profile.sid));
-    ui->profileTID->setText(QString::number(profile.tid));
-    ui->profileSID->setText(QString::number(profile.sid));
-    ui->profileGame->setText(profile.getVersion());
+    ui->idGenerator->setText(QString::number(profile.getTid()));
+    ui->sidGenerator->setText(QString::number(profile.getSid()));
+    ui->idSearcher->setText(QString::number(profile.getTid()));
+    ui->sidSearcher->setText(QString::number(profile.getSid()));
+    ui->profileTID->setText(QString::number(profile.getTid()));
+    ui->profileSID->setText(QString::number(profile.getSid()));
+    ui->profileGame->setText(profile.getVersionString());
 
-    Game version = profile.version;
+    // Rock smash needs more research
+    /*Game version = profile.getVersion();
     if (version == HeartGold || version == SoulSilver)
     {
         if (ui->comboBoxEncounterGenerator->count() == 5)
@@ -172,7 +171,7 @@ void Wild4::on_comboBoxProfiles_currentIndexChanged(int index)
             ui->comboBoxEncounterGenerator->removeItem(1);
         if (ui->comboBoxEncounterSearcher->count() == 6)
             ui->comboBoxEncounterSearcher->removeItem(1);
-    }
+    }*/
 
     updateLocationsSearcher();
     updateLocationsGenerator();
@@ -266,6 +265,9 @@ void Wild4::on_comboBoxEncounterGenerator_currentIndexChanged(int index)
         case SuperRod:
             t << "0" << "1" << "2" << "3" << "4";
             break;
+        case RockSmash:
+            t << "0" << "1";
+            break;
         default:
             break;
     }
@@ -292,6 +294,9 @@ void Wild4::on_comboBoxEncounterSearcher_currentIndexChanged(int index)
         case GoodRod:
         case SuperRod:
             t << "0" << "1" << "2" << "3" << "4";
+            break;
+        case RockSmash:
+            t << "0" << "1";
             break;
         default:
             break;
@@ -364,22 +369,22 @@ void Wild4::on_generate_clicked()
                                         ui->comboBoxNatureGenerator->getChecked(), ui->comboBoxHiddenPowerGenerator->getChecked(),
                                         ui->checkBoxShinyGenerator->isChecked(), ui->checkBoxDisableGenerator->isChecked(), ui->comboBoxSlotGenerator->getChecked());
 
-    generator.encounterType = (Encounter)ui->comboBoxEncounterGenerator->currentData().toInt();
+    generator.setEncounterType((Encounter)ui->comboBoxEncounterGenerator->currentData().toInt());
     if (ui->pushButtonLeadGenerator->text() == tr("Cute Charm"))
-        generator.leadType = (Lead)ui->comboBoxLeadGenerator->currentData().toInt();
+        generator.setLeadType((Lead)ui->comboBoxLeadGenerator->currentData().toInt());
     else if (ui->pushButtonLeadGenerator->text() == tr("Suction Cups"))
-        generator.leadType = SuctionCups;
+        generator.setLeadType(SuctionCups);
     else
     {
         int num = ui->comboBoxLeadGenerator->currentIndex();
         if (num == 0)
         {
-            generator.leadType = None;
+            generator.setLeadType(None);
         }
         else
         {
-            generator.leadType = Synchronize;
-            generator.synchNature = Nature::getAdjustedNature(ui->comboBoxLeadGenerator->currentIndex() - 1);
+            generator.setLeadType(Synchronize);
+            generator.setSynchNature(Nature::getAdjustedNature(ui->comboBoxLeadGenerator->currentIndex() - 1));
         }
     }
 
@@ -399,8 +404,8 @@ void Wild4::search()
                                         ui->comboBoxSlotSearcher->getChecked());
     Searcher4 searcher = Searcher4(tid, sid, genderRatioIndex, ui->minDelay->text().toUInt(), ui->maxDelay->text().toUInt(), ui->minFrame->text().toUInt(), ui->maxFrame->text().toUInt(), compare, (Method)ui->comboBoxMethodSearcher->currentData().toInt());
 
-    searcher.encounterType = (Encounter)ui->comboBoxEncounterSearcher->currentData().toInt();
-    searcher.leadType = (Lead)ui->comboBoxLeadSearcher->currentData().toInt();
+    searcher.setEncounterType((Encounter)ui->comboBoxEncounterSearcher->currentData().toInt());
+    searcher.setLeadType((Lead)ui->comboBoxLeadSearcher->currentData().toInt());
 
     vector<u32> min = ui->ivFilterSearcher->getLower();
     vector<u32> max = ui->ivFilterSearcher->getUpper();
@@ -484,10 +489,10 @@ void Wild4::updateLocationsSearcher()
     Encounter encounter = (Encounter)ui->comboBoxEncounterSearcher->currentData().toInt();
     Game game = Diamond;
 
-    if (ui->comboBoxProfiles->currentIndex() > 0)
-        game = profiles.at(ui->comboBoxProfiles->currentIndex() - 1).version;
+    if (ui->comboBoxProfiles->currentIndex() >= 0)
+        game = profiles[ui->comboBoxProfiles->currentIndex()].getVersion();
 
-    encounterSearcher = EncounterArea4::getEncounters(encounter, game);
+    encounterSearcher = EncounterArea4::getEncounters(encounter, game, ui->comboBoxTimeSearcher->currentIndex() + 1);
     vector<u32> locs;
     for (EncounterArea4 area : encounterSearcher)
         locs.push_back(area.getLocation());
@@ -519,10 +524,10 @@ void Wild4::updateLocationsGenerator()
     Encounter encounter = (Encounter)ui->comboBoxEncounterGenerator->currentData().toInt();
     Game game = Diamond;
 
-    if (ui->comboBoxProfiles->currentIndex() > 0)
-        game = profiles.at(ui->comboBoxProfiles->currentIndex() - 1).version;
+    if (ui->comboBoxProfiles->currentIndex() >= 0)
+        game = profiles[ui->comboBoxProfiles->currentIndex()].getVersion();
 
-    encounterGenerator = EncounterArea4::getEncounters(encounter, game);
+    encounterGenerator = EncounterArea4::getEncounters(encounter, game, ui->comboBoxTimeGenerator->currentIndex() + 1);
     vector<u32> locs;
     for (EncounterArea4 area : encounterGenerator)
         locs.push_back(area.getLocation());
@@ -557,4 +562,18 @@ void Wild4::updateProgressBar()
 void Wild4::updateViewSearcher(vector<Frame4> frames)
 {
     s->addItems(frames);
+}
+
+void Wild4::on_comboBoxTimeGenerator_currentIndexChanged(int index)
+{
+    index = ui->comboBoxLocationGenerator->currentIndex();
+    updateLocationsGenerator();
+    ui->comboBoxLocationGenerator->setCurrentIndex(index);
+}
+
+void Wild4::on_comboBoxTimeSearcher_currentIndexChanged(int index)
+{
+    index = ui->comboBoxLocationSearcher->currentIndex();
+    updateLocationsSearcher();
+    ui->comboBoxLocationSearcher->setCurrentIndex(index);
 }

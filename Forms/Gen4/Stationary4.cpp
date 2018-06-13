@@ -77,10 +77,8 @@ void Stationary4::saveSettings()
 void Stationary4::setupModels()
 {
     ui->tableViewGenerator->setModel(g);
-    ui->tableViewGenerator->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->tableViewSearcher->setModel(s);
-    ui->tableViewSearcher->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->initialSeedGenerator->setValues(0, 32, false);
     ui->idGenerator->setValues(0, 48, true);
@@ -131,7 +129,7 @@ void Stationary4::updateProfiles()
     ui->comboBoxProfiles->clear();
 
     for (int i = 0; i < (int)profiles.size(); i++)
-        ui->comboBoxProfiles->addItem(profiles.at(i).profileName);
+        ui->comboBoxProfiles->addItem(profiles[i].getProfileName());
 
     QSettings setting;
     int val = setting.value("stationary4Profile").toInt();
@@ -148,13 +146,13 @@ void Stationary4::on_comboBoxProfiles_currentIndexChanged(int index)
 {
     auto profile = profiles[index >= 0 ? index : 0];
 
-    ui->idGenerator->setText(QString::number(profile.tid));
-    ui->sidGenerator->setText(QString::number(profile.sid));
-    ui->idSearcher->setText(QString::number(profile.tid));
-    ui->sidSearcher->setText(QString::number(profile.sid));
-    ui->profileTID->setText(QString::number(profile.tid));
-    ui->profileSID->setText(QString::number(profile.sid));
-    ui->profileGame->setText(profile.getVersion());
+    ui->idGenerator->setText(QString::number(profile.getTid()));
+    ui->sidGenerator->setText(QString::number(profile.getSid()));
+    ui->idSearcher->setText(QString::number(profile.getTid()));
+    ui->sidSearcher->setText(QString::number(profile.getSid()));
+    ui->profileTID->setText(QString::number(profile.getTid()));
+    ui->profileSID->setText(QString::number(profile.getSid()));
+    ui->profileGame->setText(profile.getVersionString());
 }
 
 void Stationary4::on_anyNatureGenerator_clicked()
@@ -198,20 +196,20 @@ void Stationary4::on_generate_clicked()
                                         ui->comboBoxNatureGenerator->getChecked(), ui->comboBoxHiddenPowerGenerator->getChecked(),
                                         ui->checkBoxShinyGenerator->isChecked(), ui->checkBoxDisableGenerator->isChecked());
 
-    generator.encounterType = Stationary;
+    generator.setEncounterType(Stationary);
     if (ui->pushButtonLeadGenerator->text() == tr("Cute Charm"))
-        generator.leadType = (Lead)ui->comboBoxLeadGenerator->currentData().toInt();
+        generator.setLeadType((Lead)ui->comboBoxLeadGenerator->currentData().toInt());
     else
     {
         int num = ui->comboBoxLeadGenerator->currentIndex();
         if (num == 0)
         {
-            generator.leadType = None;
+            generator.setLeadType(None);
         }
         else
         {
-            generator.leadType = Synchronize;
-            generator.synchNature = Nature::getAdjustedNature(ui->comboBoxLeadGenerator->currentIndex() - 1);
+            generator.setLeadType(Synchronize);
+            generator.setSynchNature(Nature::getAdjustedNature(ui->comboBoxLeadGenerator->currentIndex() - 1));
         }
     }
 
@@ -229,7 +227,7 @@ void Stationary4::search()
                                         genderRatioIndex, ui->comboBoxAbilitySearcher->currentIndex(), ui->comboBoxNatureSearcher->getChecked(),
                                         ui->comboBoxHiddenPowerSearcher->getChecked(), ui->checkBoxShinySearcher->isChecked(), false);
     Searcher4 searcher = Searcher4(tid, sid, genderRatioIndex, ui->minDelay->text().toUInt(), ui->maxDelay->text().toUInt(), ui->minFrame->text().toUInt(), ui->maxFrame->text().toUInt(), compare, (Method)ui->comboBoxMethodSearcher->currentData().toInt());
-    searcher.leadType = (Lead)ui->comboBoxLeadSearcher->currentData().toInt();
+    searcher.setLeadType((Lead)ui->comboBoxLeadSearcher->currentData().toInt());
 
     vector<u32> min = ui->ivFilterSearcher->getLower();
     vector<u32> max = ui->ivFilterSearcher->getUpper();
